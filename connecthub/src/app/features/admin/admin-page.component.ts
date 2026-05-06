@@ -283,7 +283,7 @@ type AdminTab = 'users' | 'rooms' | 'analytics' | 'connections' | 'broadcast' | 
               <div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Live connections</p>
                 <p class="text-4xl font-bold text-green-500">
-                  {{ connections.activeCount ?? connections.count ?? connections.total ?? '—' }}
+                  {{ connections.activeCount ?? connections.count ?? connections.onlineCount ?? connections.total ?? '—'  }}
                 </p>
               </div>
             </div>
@@ -633,10 +633,11 @@ export class AdminPageComponent implements OnInit, OnDestroy {
   analyticsMetrics(): { label: string; value: any }[] {
     if (!this.analytics) return [];
     return Object.entries(this.analytics)
-      .filter(([, v]) => typeof v === 'number' || typeof v === 'string')
       .map(([k, v]) => ({
         label: k.replace(/([A-Z])/g, ' $1').trim(),
-        value: v
+        value: typeof v === 'object' && v !== null
+          ? (v as any).count ?? (v as any).onlineCount ?? '—'
+          : v
       }));
   }
 

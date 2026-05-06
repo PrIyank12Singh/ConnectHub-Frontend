@@ -25,19 +25,27 @@ export class OAuthCallbackComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
-      const token = params['token'];
-      const userId = params['userId'];
+      const token    = params['token'];
+      const userId   = params['userId'];
       const username = params['username'];
-      const email = params['email'];
-      const role = params['role'];
+      const email    = params['email'];
+      const role     = params['role'];
 
       if (token) {
-        // Save to localStorage manually
         localStorage.setItem('connecthub_token', token);
-        localStorage.setItem('connecthub_user', JSON.stringify({
-          userId, username, email, role
-        }));
-        this.router.navigate(['/chat']);
+
+        const user = { userId, username, email, role };
+
+        // ✅ This was missing — updates the in-memory BehaviorSubject
+        // so guards can read the role immediately without a page refresh
+        this.authService.setCurrentUser(user);
+
+        // Send admins directly to the admin panel
+        if (role === 'PLATFORM_ADMIN') {
+          this.router.navigate(['/admin']);
+        } else {
+          this.router.navigate(['/chat']);
+        }
       } else {
         this.router.navigate(['/login']);
       }

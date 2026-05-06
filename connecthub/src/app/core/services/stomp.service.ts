@@ -140,9 +140,21 @@ export class StompService implements OnDestroy {
    * @param userId  Current user's ID for personal queue subscription
    */
   connect(token: string, userId: string): void {
-    if (this.client?.active) {
+    // FIX #3: Guard against multiple connect() calls.
+    // chat-page.component.ts calls connect() from ngOnInit. If the component
+    // re-initialises (e.g. route navigation, token refresh), connect() is
+    // called again while the client is still active — causing the
+    // "Already connected — skipping" spam and multiplying the reconnect loop.
+    // Check BOTH client.active AND current state to prevent duplicate connects.
+    if (this.client?.active || this.stateSubject.value === 'CONNECTING') {
       console.log('[STOMP] Already connected — skipping');
       return;
+    }
+
+    // Fully deactivate any lingering stale client before creating a new one
+    if (this.client) {
+      this.client.deactivate();
+      this.client = null;
     }
 
     this.stateSubject.next('CONNECTING');
@@ -160,8 +172,11 @@ export class StompService implements OnDestroy {
       heartbeatIncoming: 20000,
       heartbeatOutgoing: 20000,
 
-      // Auto-reconnect: wait 5s before retry
-      reconnectDelay: 5000,
+      // Auto-reconnect: wait 10s before retry (was 5s).
+      // FIX #3: A shorter delay causes a reconnect storm when the backend
+      // is temporarily overloaded — each reconnect attempt sends a CONNECT
+      // frame that further saturates the clientInboundChannel thread pool.
+      reconnectDelay: 10000,
 
       onConnect: () => {
         console.log('[STOMP] Connected ✓');

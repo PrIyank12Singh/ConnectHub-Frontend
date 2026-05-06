@@ -90,6 +90,11 @@ export class AuthService {
     localStorage.setItem(this.userKey, JSON.stringify(updated));
   }
 
+  setCurrentUser(user: User): void {
+    localStorage.setItem(this.userKey, JSON.stringify(user));
+    this.userSubject.next(user);
+  }
+
   private getSavedUser(): User | null {
     const saved = localStorage.getItem(this.userKey);
     return saved ? JSON.parse(saved) : null;
