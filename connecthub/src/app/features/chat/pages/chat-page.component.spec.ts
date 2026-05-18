@@ -35,6 +35,7 @@ const makePresenceServiceMock = () => ({ goOnline: vi.fn(() => of({})), goOfflin
 const makeAuthServiceMock = () => ({
   getCurrentUser: vi.fn(() => ({ userId: 'u1', username: 'u1' })),
   getToken: vi.fn(() => 'tok'),
+  updateProfile: vi.fn((userId: string, data: any) => of({ userId, ...data, avatarUrl: data.avatarUrl })),
   updateCurrentUser: vi.fn(),
 });
 
@@ -148,7 +149,10 @@ describe('ChatPageComponent STOMP and typing', () => {
 
     uploadEvents$.next({ type: HttpEventType.Response, body: { url: 'http://cdn/avatar.jpg' } });
 
-    expect(webMock.updateProfile).toHaveBeenCalledWith('u1', { avatarUrl: 'http://cdn/avatar.jpg' });
+    expect(authMock.updateProfile).toHaveBeenCalledWith('u1', {
+      fullName: 'u1',
+      avatarUrl: 'http://cdn/avatar.jpg',
+    });
     expect(authMock.updateCurrentUser).toHaveBeenCalledWith(expect.objectContaining({ avatarUrl: 'http://cdn/avatar.jpg' }));
     expect(comp.user.avatarUrl).toBe('http://cdn/avatar.jpg');
   });

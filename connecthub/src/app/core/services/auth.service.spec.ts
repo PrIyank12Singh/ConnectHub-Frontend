@@ -15,7 +15,8 @@ describe('AuthService', () => {
     userId: 'user-123',
     username: 'testuser',
     email: 'test@example.com',
-    role: 'USER'
+    role: 'USER',
+    bio: 'Hello there'
   };
 
   const mockAuthResponse = {
@@ -176,6 +177,15 @@ describe('AuthService', () => {
     const req = http.expectOne('http://localhost:8080/auth/profile/user-123');
     expect(req.request.method).toBe('GET');
     req.flush(mockUser);
+  });
+
+  it('should PUT user profile by userId', () => {
+    const payload = { avatarUrl: 'http://img.png' };
+    service.updateProfile('user-123', payload).subscribe();
+    const req = http.expectOne('http://localhost:8080/auth/profile/user-123');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual(payload);
+    req.flush({ ...mockUser, ...payload });
   });
 
   // ─── searchUsers ─────────────────────────────────────────────────────────

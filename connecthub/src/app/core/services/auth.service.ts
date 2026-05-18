@@ -11,6 +11,7 @@ export interface User {
   role: string;
   fullName?: string;
   avatarUrl?: string;
+  bio?: string;
 }
 
 export interface AuthResponse {
@@ -102,6 +103,10 @@ export class AuthService {
 
   getProfile(userId: string): Observable<any> {
     return this.http.get(`${this.API}/auth/profile/${userId}`);
+  }
+
+  updateProfile(userId: string, data: any): Observable<any> {
+    return this.http.put(`${this.API}/auth/profile/${userId}`, data);
   }
 
   searchUsers(username: string): Observable<any> {

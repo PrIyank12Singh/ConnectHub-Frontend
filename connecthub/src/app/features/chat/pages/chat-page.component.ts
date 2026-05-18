@@ -624,22 +624,42 @@ export class ChatPageComponent implements OnInit, OnDestroy, AfterViewChecked {
             return;
           }
 
-          this.webService.updateProfile(this.user.userId, { avatarUrl }).subscribe({
+          const profileUpdate = {
+            fullName: this.user!.fullName?.trim() || this.user!.username,
+            avatarUrl,
+          };
+
+          const applySavedProfile = (profile: any) => {
+            const savedAvatarUrl = profile?.avatarUrl || profile?.profileImageUrl || avatarUrl;
+            const updatedUser = {
+              ...this.user,
+              ...(profile || {}),
+              avatarUrl: savedAvatarUrl,
+            };
+
+            this.user = updatedUser;
+            this.authService.updateCurrentUser(updatedUser);
+            this.closeProfilePhotoModal();
+          };
+
+          this.authService.updateProfile(this.user.userId, profileUpdate).subscribe({
             next: (profile) => {
-              const updatedUser = {
-                ...this.user,
-                ...(profile || {}),
-                avatarUrl: profile?.avatarUrl || avatarUrl,
-              };
-              this.user = updatedUser;
-              this.authService.updateCurrentUser(updatedUser);
-              this.closeProfilePhotoModal();
+              applySavedProfile(profile);
             },
             error: (err) => {
-              console.warn('[ProfilePhoto] profile save failed', err);
-              this.profilePhotoUploading = false;
-              this.profilePhotoUploadProgress = 0;
-              this.profilePhotoError = 'Photo uploaded, but saving the profile failed. Please try again.';
+              console.warn('[ProfilePhoto] auth profile save failed, trying web profile save', err);
+
+              this.webService.updateProfile(this.user.userId, profileUpdate).subscribe({
+                next: (profile) => {
+                  applySavedProfile(profile);
+                },
+                error: (webErr) => {
+                  console.warn('[ProfilePhoto] profile save failed', webErr);
+                  this.profilePhotoUploading = false;
+                  this.profilePhotoUploadProgress = 0;
+                  this.profilePhotoError = 'Photo uploaded, but saving the profile failed. Please try again.';
+                }
+              });
             }
           });
         }
